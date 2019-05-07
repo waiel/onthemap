@@ -105,6 +105,7 @@
                         <outlet property="emailTextField" destination="WiX-qc-Muq" id="EGj-sK-4wI"/>
                         <outlet property="loginButton" destination="BP5-EM-9ye" id="taY-u5-vzu"/>
                         <outlet property="passwordTextField" destination="hsk-Ef-SIk" id="n6e-Q0-3Tj"/>
+                        <outlet property="stackView" destination="Uqw-f3-Fe7" id="Lre-i8-6UG"/>
                     </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="dkx-z0-nzr" sceneMemberID="firstResponder"/>
