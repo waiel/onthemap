@@ -36,87 +36,35 @@ class LoginViewController: UIViewController {
     }
     
     
-    func tastPostSession(username: String, password: String, compleation: @escaping (SessionResponse?,Error?)-> Void){
-        let sessionurl = URL(string: API.init().udacityBaseURL + "session")!
-        let urlParamerts = ["udacity": ["username": username, "password": password] ]
-    
-        var request = URLRequest(url: sessionurl)
-        request.httpMethod = "POST"
-        request.addValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.addValue("application/json", forHTTPHeaderField: "accept")
-        let jsonData = try? JSONSerialization.data(withJSONObject: urlParamerts, options: .prettyPrinted)
-        request.httpBody = jsonData
-        
-        let task = URLSession.shared.dataTask(with: request) { data, response, error in
-            guard let data = data else{
-                DispatchQueue.main.async {
-                    compleation(nil,error)
-                }
-                return
-            }
-           
-            
-            let newData = data.subdata(in: 5..<data.count)
-            //print(String(data: newData, encoding: .utf8)!)
-            
-            let decoder = JSONDecoder()
-            do {
-                let responseObject = try decoder.decode(SessionResponse.self, from: newData )
-                DispatchQueue.main.async {
-                    print("inlogin")
-                    print(responseObject)
-                    compleation(responseObject,nil)
-                }
-            }catch{
-                DispatchQueue.main.async {
-                    print("No Login!!")
-                    compleation(nil,error)
-                }
-            }
-                
-        }
-        task.resume()
-    }
- 
-    
-    
     @IBAction func loginButtonClicked(_ sender: Any) {
         activityIndicator.startAnimating();
         
         let email = emailTextField.text!
         let password = passwordTextField.text!
         
-        if( email.isEmpty || password.isEmpty) {
+        if(email.isEmpty || password.isEmpty) {
             showAlert(title: "Information Required", message: "Email and Password can not be empty!\n Please fill the required fileds to login", handler: nil)
             return
         }
         
-        
-        tastPostSession(username: email, password: password) { (response, error) in
-            if(error != nil){
-                self.showAlert(title: "Login Failed", message: "Invalid Username and Password \n Please try again.", handler: nil)
-                return
-            }
-            
-            if((response?.account.registered)!) {
-                self.performSegue(withIdentifier: "OnTheMapTabBar", sender: self)
-            }
-            
-            
-            
-            
-        }
-        
-        activityIndicator.stopAnimating()
-        
+        login(username: email, password: password, completion: handleLoginResponse(success:error:))
+        activityIndicator.stopAnimating();
     }
-    
+
+    func handleLoginResponse(success: Bool, error: Error?){
+        if(success){
+            performSegue(withIdentifier: "OnTheMapTabBar", sender: self)
+        }else{
+            showAlert(title: "Login Failed", message: "Invalid Username and Password \n Please try again.", handler: nil)
+        }
+    }
+
     func showAlert(title: String, message: String, handler: ((UIAlertAction) -> Void)?){
         let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: "OK", style: .default, handler: handler))
         self.present(alert, animated: true, completion: nil)
     }
-    
+
 }
 
 
