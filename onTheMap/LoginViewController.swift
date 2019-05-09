@@ -38,7 +38,7 @@ class LoginViewController: UIViewController {
     
     func tastPostSession(username: String, password: String, compleation: @escaping (SessionResponse?,Error?)-> Void){
         let sessionurl = URL(string: API.init().udacityBaseURL + "session")!
-        let urlParamerts = ["udacity": ["username": username, "password": "bjkaZFPPcyXX99n#fg%"] ]
+        let urlParamerts = ["udacity": ["username": username, "password": password] ]
     
         var request = URLRequest(url: sessionurl)
         request.httpMethod = "POST"
