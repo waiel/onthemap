@@ -7,6 +7,7 @@
 //
 
 import UIKit
+import Foundation
 
 class LoginViewController: UIViewController {
 
@@ -18,11 +19,8 @@ class LoginViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-       
         // Do any additional setup after loading the view.
-        activityIndicator.hidesWhenStopped = true
         activityIndicator.isHidden = true
-        
         emailTextField.delegate = self
         passwordTextField.delegate = self
     }
@@ -38,37 +36,74 @@ class LoginViewController: UIViewController {
     }
     
     
-    @objc func keyboardWillShow(_ notification: Notification) {
+    func tastPostSession(username: String, password: String, compleation: @escaping (SessionResponse?,Error?)-> Void){
+        let sessionurl = URL(string: API.init().udacityBaseURL + "session")!
+        let urlParamerts = ["udacity": ["username": username, "password": "bjkaZFPPcyXX99n#fg%"] ]
+    
+        var request = URLRequest(url: sessionurl)
+        request.httpMethod = "POST"
+        request.addValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.addValue("application/json", forHTTPHeaderField: "accept")
+        let jsonData = try? JSONSerialization.data(withJSONObject: urlParamerts, options: .prettyPrinted)
+        request.httpBody = jsonData
         
-        //reaise keyboard for text editing
-        if emailTextField.isEditing || passwordTextField.isEditing{
-            let stackSize = self.stackView.frame.maxY;
-            let keyboardSize = self.view.frame.height - getKeyboardHeight(notification)
-            let offset = stackSize - keyboardSize
-            
-            if offset < 0 {
+        let task = URLSession.shared.dataTask(with: request) { data, response, error in
+            guard let data = data else{
+                DispatchQueue.main.async {
+                    compleation(nil,error)
+                }
                 return
             }
-            view.frame.origin.y -= offset
+           
+            
+            let newData = data.subdata(in: 5..<data.count)
+            //print(String(data: newData, encoding: .utf8)!)
+            
+            let decoder = JSONDecoder()
+            do {
+                let responseObject = try decoder.decode(SessionResponse.self, from: newData )
+                DispatchQueue.main.async {
+                    print("inlogin")
+                    print(responseObject)
+                    compleation(responseObject,nil)
+                }
+            }catch{
+                DispatchQueue.main.async {
+                    print("No Login!!")
+                    compleation(nil,error)
+                }
+            }
+                
         }
+        task.resume()
     }
-    
-    // When hiding return to original state
-    @objc func keyboardWillHide(_ notification: Notification) {
-        view.frame.origin.y = 0
-    }
+ 
     
     
     @IBAction func loginButtonClicked(_ sender: Any) {
-        
         activityIndicator.startAnimating();
         
         let email = emailTextField.text!
         let password = passwordTextField.text!
         
         if( email.isEmpty || password.isEmpty) {
-            
             showAlert(title: "Information Required", message: "Email and Password can not be empty!\n Please fill the required fileds to login", handler: nil)
+            return
+        }
+        
+        
+        tastPostSession(username: email, password: password) { (response, error) in
+            if(error != nil){
+                self.showAlert(title: "Login Failed", message: "Invalid Username and Password \n Please try again.", handler: nil)
+                return
+            }
+            
+            if((response?.account.registered)!) {
+                self.performSegue(withIdentifier: "OnTheMapTabBar", sender: self)
+            }
+            
+            
+            
             
         }
         
@@ -109,5 +144,25 @@ extension LoginViewController: UITextFieldDelegate {
         let userInfo = notification.userInfo
         let keyboardSize = userInfo![UIResponder.keyboardFrameEndUserInfoKey] as! NSValue // of CGRect
         return keyboardSize.cgRectValue.height
+    }
+    
+    
+    @objc func keyboardWillShow(_ notification: Notification) {
+        //reaise keyboard for text editing
+        if emailTextField.isEditing || passwordTextField.isEditing{
+            let stackSize = self.stackView.frame.maxY;
+            let keyboardSize = self.view.frame.height - getKeyboardHeight(notification)
+            let offset = stackSize - keyboardSize
+            
+            if offset < 0 {
+                return
+            }
+            view.frame.origin.y -= offset
+        }
+    }
+    
+    // When hiding return to original state
+    @objc func keyboardWillHide(_ notification: Notification) {
+        view.frame.origin.y = 0
     }
 }
